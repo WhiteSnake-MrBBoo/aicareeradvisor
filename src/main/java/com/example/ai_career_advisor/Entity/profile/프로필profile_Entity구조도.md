@@ -99,6 +99,7 @@
 ----
 - ## ERD Diagram
 ```mermaid
+erDiagram
     AppUser ||--o{ PrfProfile : "has"
     
     PrfProfile ||--|| PrfProfileGoal : "defines"
