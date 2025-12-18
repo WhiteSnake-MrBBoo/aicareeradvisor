@@ -96,12 +96,10 @@
     * `PrfProfile` ↔ `MasValue`
     * `PrfProfile` ↔ `MasWorkEnv`
     * `PrfProfile` ↔ `MasConcern`
----
-
+----
+qwqw
 - ## ERD Diagram
-12312
 ```mermaid
-erDiagram
     AppUser ||--o{ PrfProfile : "has"
     
     PrfProfile ||--|| PrfProfileGoal : "defines"
