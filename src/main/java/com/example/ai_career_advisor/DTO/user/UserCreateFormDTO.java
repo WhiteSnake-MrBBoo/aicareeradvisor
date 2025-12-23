@@ -12,7 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class UserCreateForm {
+public class UserCreateFormDTO {
 
     /** 화면 표시용 이름(닉네임/실명) */
     private String displayName;

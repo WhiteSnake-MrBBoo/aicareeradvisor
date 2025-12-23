@@ -1,6 +1,6 @@
 package com.example.ai_career_advisor.Controller.profile;
 
-import com.example.ai_career_advisor.DTO.profile.request.ProfileCreateRequest;
+import com.example.ai_career_advisor.DTO.profile.request.ProfileCreateRequestDTO;
 import com.example.ai_career_advisor.Entity.profile.core.PrfProfile;
 import com.example.ai_career_advisor.Service.profile.ProfileService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class ProfileController {
      * - 응답: 생성된 profileId
      */
     @PostMapping
-    public ResponseEntity<Long> createProfile(@RequestBody ProfileCreateRequest request) {
+    public ResponseEntity<Long> createProfile(@RequestBody ProfileCreateRequestDTO request) {
 
         PrfProfile createdProfile = profileService.createProfileWithDetails(request);
         Long profileId = createdProfile.getProfileId();

@@ -40,6 +40,12 @@ public class PrfProfileWorkEnv extends BaseEntity {
     private PrfProfile profile;
 
     /** 근무환경 마스터(FK) */
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @MapsId("workEnvCd")
+//    @JoinColumn(name = "work_env_cd")
+//    private MasWorkEnv workEnv;
+
+    // 개념 알고 체크 해야 할 사항 임 ..
     @MapsId("envCd")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(

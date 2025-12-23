@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProfileConcernRequest {
+public class ProfileConcernRequestDTO {
 
     private String concernCode;
     private String detailText;

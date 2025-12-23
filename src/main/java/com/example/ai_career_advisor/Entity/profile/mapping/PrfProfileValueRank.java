@@ -60,6 +60,13 @@ public class PrfProfileValueRank extends BaseEntity {
     )
     private MasValue value;
 
+
+//    /**
+//     * 가치관 우선순위 (1~3 등)
+//     */
+//    @Column(name = "priority_order")
+//    private Integer priorityOrder;
+
     /** 우선순위(1~3) */
     @Column(name = "rank_order", nullable = false)
     private Integer rankOrder;

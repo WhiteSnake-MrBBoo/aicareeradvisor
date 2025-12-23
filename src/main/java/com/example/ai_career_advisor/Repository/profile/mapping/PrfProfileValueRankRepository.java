@@ -10,5 +10,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
  */
 public interface PrfProfileValueRankRepository extends JpaRepository<PrfProfileValueRank, PrfProfileValueRankId> {
 
+    //프로필 PK 가져 오기
     List<PrfProfileValueRank> findByProfileProfileId(Long profileId);
+
+    //둘중에 아무거나 써도 됨 : 프로필을 최신 순으로 정렬래서 PK 가져 오는 부분임
+    List<PrfProfileValueRank> findByProfile_ProfileIdOrderByRankOrderAsc(Long profileId);
 }

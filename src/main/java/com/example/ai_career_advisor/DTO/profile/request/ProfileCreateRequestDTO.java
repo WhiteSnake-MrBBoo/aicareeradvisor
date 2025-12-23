@@ -14,7 +14,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProfileCreateRequest {
+public class ProfileCreateRequestDTO {
 
     // --- User 정보 (테스트용 식별) ---
     private String displayName;
@@ -38,8 +38,8 @@ public class ProfileCreateRequest {
     private List<String> workEnvCodes;
 
     // --- 경험(1:N) ---
-    private List<ProfileExperienceRequest> experiences;
+    private List<ProfileExperienceRequestDTO> experiences;
 
     // --- 고민(다중 선택 + 상세) ---
-    private List<ProfileConcernRequest> concerns;
+    private List<ProfileConcernRequestDTO> concerns;
 }
