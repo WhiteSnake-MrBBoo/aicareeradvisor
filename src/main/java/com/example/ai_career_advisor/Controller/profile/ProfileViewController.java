@@ -4,10 +4,11 @@ import com.example.ai_career_advisor.Constant.ExperienceType;
 import com.example.ai_career_advisor.Constant.ProfileType;
 import com.example.ai_career_advisor.Constant.UserGroup;
 
-import com.example.ai_career_advisor.DTO.profile.request.ProfileConcernRequest;
-import com.example.ai_career_advisor.DTO.profile.request.ProfileCreateRequest;
-import com.example.ai_career_advisor.DTO.profile.request.ProfileExperienceRequest;
-import com.example.ai_career_advisor.DTO.profile.view.ProfileForm;
+import com.example.ai_career_advisor.DTO.profile.request.ProfileConcernRequestDTO;
+import com.example.ai_career_advisor.DTO.profile.request.ProfileCreateRequestDTO;
+import com.example.ai_career_advisor.DTO.profile.request.ProfileExperienceRequestDTO;
+import com.example.ai_career_advisor.DTO.profile.view.ProfileDetailViewDTO;
+import com.example.ai_career_advisor.DTO.profile.view.ProfileFormDTO;
 
 import com.example.ai_career_advisor.Entity.master.MasConcern;
 import com.example.ai_career_advisor.Entity.master.MasSkill;
@@ -40,6 +41,7 @@ import java.util.Optional;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -59,6 +61,7 @@ import org.springframework.web.bind.annotation.*;
  * - TODO: 추후 보안 적용 시, UserSessionManager 내부 구현을
  *         Principal 기반으로 교체할 예정입니다.
  */
+@Slf4j
 @Controller
 @RequestMapping("/profile")
 @RequiredArgsConstructor
@@ -103,7 +106,7 @@ public class ProfileViewController {
         AppUser currentUser = userOptional.get();
 
         // --- 1) 폼 기본값 설정 ---
-        ProfileForm form = new ProfileForm();
+        ProfileFormDTO form = new ProfileFormDTO();
 
         // 프로필 제목 기본값: "이름 - 기본 커리어 프로필" 형식
         String defaultTitle = currentUser.getDisplayName() + " - 기본 커리어 프로필";
@@ -152,15 +155,17 @@ public class ProfileViewController {
     @PostMapping("/save")
     public String saveProfile(
             HttpSession session,
-            @ModelAttribute("profileForm") ProfileForm form
+            @ModelAttribute("profileForm") ProfileFormDTO form
     ) {
 
+        //session에 있는 정보 가져오기 PK 기준
         Long currentUserId = userSessionManager.getCurrentUserId(session);
         if (currentUserId == null) {
             String redirectPath = "redirect:/user/select";
             return redirectPath;
         }
 
+        //session 정보를 기준으로 user pk 가져 오기
         Optional<AppUser> userOptional = userService.findById(currentUserId);
         if (userOptional.isEmpty()) {
             userSessionManager.clearCurrentUser(session);
@@ -172,7 +177,7 @@ public class ProfileViewController {
 
         // --- 1) View용 폼(ProfileForm)을 Service용 DTO(ProfileCreateRequest)로 변환 ---
 
-        ProfileCreateRequest request = new ProfileCreateRequest();
+        ProfileCreateRequestDTO request = new ProfileCreateRequestDTO();
 
         // 1-1. User 정보 (현재 단계에서는 세션의 User 정보를 그대로 사용)
         request.setDisplayName(currentUser.getDisplayName());
@@ -216,7 +221,7 @@ public class ProfileViewController {
         request.setWorkEnvCodes(form.getSelectedWorkEnvCodes());
 
         // 1-7. 보유 경험 리스트(JSON -> DTO 리스트)
-        List<ProfileExperienceRequest> experienceRequests = new ArrayList<>();
+        List<ProfileExperienceRequestDTO> experienceRequests = new ArrayList<>();
 
         String experienceJson = form.getExperienceJson();
         boolean hasExperienceJson = StringUtils.hasText(experienceJson);
@@ -252,7 +257,7 @@ public class ProfileViewController {
                     }
 
                     // 3) Service 계층에서 사용하는 ProfileExperienceRequest 생성
-                    ProfileExperienceRequest expRequest = ProfileExperienceRequest.builder()
+                    ProfileExperienceRequestDTO expRequest = ProfileExperienceRequestDTO.builder()
                             .experienceType(experienceType)
                             .title(payload.getTitle())
                             .organization(payload.getOrganization())
@@ -279,12 +284,18 @@ public class ProfileViewController {
 
 
         // 1-8. 진로 고민 → 선택된 코드마다 동일한 상세 설명을 부여
-        List<ProfileConcernRequest> concerns = new ArrayList<>();
+        // 서비스 로직 저장 로직 까지는 구현 되어 있으나 체크박스 mas_concern이 정해 지지 않았음
+        List<ProfileConcernRequestDTO> concerns = new ArrayList<>();
+
+        //view 폼에 있는 선택 진로 상담 부분이 들어 오는지 체크 사항 로그
+        log.info(">>> form.getSelectedConcernCodes() size: {}",
+                (form.getSelectedConcernCodes() == null ? null : form.getSelectedConcernCodes().size()));
+
 
         if (form.getSelectedConcernCodes() != null && !form.getSelectedConcernCodes().isEmpty()) {
             for (String concernCode : form.getSelectedConcernCodes()) {
 
-                ProfileConcernRequest concernRequest = ProfileConcernRequest.builder()
+                ProfileConcernRequestDTO concernRequest = ProfileConcernRequestDTO.builder()
                         .concernCode(concernCode)
                         .detailText(form.getConcernDetailText())
                         .build();
@@ -378,6 +389,32 @@ public class ProfileViewController {
         private String description;
         private String outcome;
         private String linkUrl;
+    }
+
+    /**
+     * 프로필 상세 화면
+     * - /profile/{profileId}
+     * - 현재 세션의 사용자와 프로필 소유자를 검증한 뒤 상세 정보를 보여줍니다.
+     */
+    @GetMapping("/{profileId}")
+    public String viewProfileDetail(@PathVariable Long profileId,
+                                    HttpSession session,
+                                    Model model) {
+
+        Long currentUserId = userSessionManager.getCurrentUserId(session);
+        if (currentUserId == null) {
+            return "redirect:/user/select";
+        }
+
+        ProfileDetailViewDTO detail =
+                profileService.getProfileDetail(profileId, currentUserId);
+
+        model.addAttribute("profileDetail", detail);
+
+        // 추후 탭(자기소개서/AI 분석 등)에 활용할 profileId도 함께 전달
+        model.addAttribute("profileId", profileId);
+
+        return "profile/profile-detail"; // templates/profile/profile-detail.html
     }
 
 

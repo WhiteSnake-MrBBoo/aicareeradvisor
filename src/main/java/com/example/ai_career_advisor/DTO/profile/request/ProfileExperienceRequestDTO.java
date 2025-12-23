@@ -12,7 +12,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProfileExperienceRequest {
+public class ProfileExperienceRequestDTO {
 
     private ExperienceType experienceType;
     private String title;

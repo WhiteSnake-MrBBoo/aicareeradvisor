@@ -60,12 +60,12 @@
         </div>
     </div>
 
-    <!-- 메인 폼 -->
+    <!-- Main 폼 -->
     <form th:action="@{/profile/save}"
           th:object="${profileForm}"
           method="post"
 
-          id="profileForm" >
+          id="profileForm" > <!--form 시작 지점-->
 
 
         <!-- 1. 프로필 기본 정보 (ProfileType) -->
@@ -424,7 +424,7 @@
             </button>
         </div>
 
-    </form>
+    </form><!--전체 프로필 저장 form 끝 지점-->
 </div>
 
 <script
@@ -507,6 +507,7 @@
         renderExperienceList();
     }
 
+    //경력 및 포트폴리오 다중 선택 save 버튼 modal 창
     document.getElementById('expSaveBtn')?.addEventListener('click', function () {
         const type = document.getElementById('expTypeInput').value;
         const title = document.getElementById('expTitleInput').value;

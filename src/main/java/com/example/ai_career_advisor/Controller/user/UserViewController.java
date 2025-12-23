@@ -1,6 +1,6 @@
 package com.example.ai_career_advisor.Controller.user;
 
-import com.example.ai_career_advisor.DTO.user.UserCreateForm;
+import com.example.ai_career_advisor.DTO.user.UserCreateFormDTO;
 import com.example.ai_career_advisor.Entity.user.AppUser;
 import com.example.ai_career_advisor.Service.user.UserService;
 import com.example.ai_career_advisor.Util.UserSessionManager;
@@ -43,7 +43,7 @@ public class UserViewController {
         List<AppUser> userList = userService.getAllUsers();
         model.addAttribute("userList", userList);
 
-        UserCreateForm createForm = new UserCreateForm();
+        UserCreateFormDTO createForm = new UserCreateFormDTO();
         model.addAttribute("userCreateForm", createForm);
 
         Long currentUserId = userSessionManager.getCurrentUserId(session);
@@ -62,7 +62,7 @@ public class UserViewController {
     @PostMapping("/create")
     public String createUserAndSelect(
             HttpSession session,
-            @ModelAttribute("userCreateForm") UserCreateForm form
+            @ModelAttribute("userCreateForm") UserCreateFormDTO form
     ) {
 
         AppUser user = userService.getOrCreateUser(

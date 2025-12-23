@@ -92,13 +92,18 @@
                 </div>
 
                 <div class="text-end">
-                    <!-- TODO: 추후 상세/편집/AI 분석/심리검사 연동 버튼 추가 예정 -->
-                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled>
-                        상세 보기 (준비 중)
-                    </button>
+                    <!-- 프로필 상세 보기: /profile/{profileId} 로 이동 -->
+                    <a class="btn btn-sm btn-outline-secondary"
+                       th:href="@{|/profile/${profile.profileId}|}">
+                        상세 보기
+                    </a>
+
+                    <!-- TODO: AI 분석/자기소개서는 상세 화면에서 탭/버튼으로 제공 -->
+                    <!--
                     <button type="button" class="btn btn-sm btn-outline-primary" disabled>
-                        AI 분석 (준비 중)
+                        AI 분석 (상세 화면에서 이용 가능)
                     </button>
+                    -->
                 </div>
             </div>
 

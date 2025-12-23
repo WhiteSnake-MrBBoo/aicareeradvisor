@@ -7,8 +7,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
  * 프로필-근무환경 매핑 리포지토리
+ * - mas_work_env(선호 근무환경 마스터)와 프로필을 매핑합니다.
  */
-public interface PrfProfileWorkEnvRepository extends JpaRepository<PrfProfileWorkEnv, PrfProfileWorkEnvId> {
+public interface PrfProfileWorkEnvRepository
+        extends JpaRepository<PrfProfileWorkEnv, PrfProfileWorkEnvId> {
 
-    List<PrfProfileWorkEnv> findByProfileProfileId(Long profileId);
+    /**
+     * 특정 프로필에 연결된 모든 선호 근무환경 매핑 조회
+     *  - profile.profileId = :profileId
+     */
+    List<PrfProfileWorkEnv> findByProfile_ProfileId(Long profileId);
 }
+
+
