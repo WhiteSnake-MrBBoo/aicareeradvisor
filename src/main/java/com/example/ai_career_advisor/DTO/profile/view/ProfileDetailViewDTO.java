@@ -48,7 +48,7 @@ public class ProfileDetailViewDTO {
     /** 진로 고민 리스트 */
     private List<ConcernItemDTO> concerns;
 
-    /** 보유 경험 리스트(경력/프로젝트/교육/자격/활동 등) */
+    /** 추가 영역 : 보유 경험 리스트(경력/프로젝트/교육/자격/활동 등) */
     private List<ExperienceItemDTO> experiences;
 
 

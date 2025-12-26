@@ -4,6 +4,8 @@ import com.example.ai_career_advisor.Constant.ExperienceType;
 import com.example.ai_career_advisor.Constant.ProfileType;
 import com.example.ai_career_advisor.Constant.UserGroup;
 
+import com.example.ai_career_advisor.DTO.ai.AiEssayRequestDTO;
+import com.example.ai_career_advisor.DTO.ai.AiEssayResultDTO;
 import com.example.ai_career_advisor.DTO.profile.request.ProfileConcernRequestDTO;
 import com.example.ai_career_advisor.DTO.profile.request.ProfileCreateRequestDTO;
 import com.example.ai_career_advisor.DTO.profile.request.ProfileExperienceRequestDTO;
@@ -22,9 +24,11 @@ import com.example.ai_career_advisor.Repository.master.MasSkillRepository;
 import com.example.ai_career_advisor.Repository.master.MasValueRepository;
 import com.example.ai_career_advisor.Repository.master.MasWorkEnvRepository;
 
+import com.example.ai_career_advisor.Service.ai.AiEssayService;
 import com.example.ai_career_advisor.Service.profile.ProfileService;
 import com.example.ai_career_advisor.Service.user.UserService;
 import com.example.ai_career_advisor.Util.UserSessionManager;
+import com.example.ai_career_advisor.Util.ai.AiEssayMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -79,6 +83,10 @@ public class ProfileViewController {
     // JSON 파싱용 ObjectMapper (스프링에서 자동 주입)
     private final ObjectMapper objectMapper;
 
+    // 새로 추가 : AI 영역 클래스 가져 오기 : 25_1223
+    private final AiEssayMapper aiEssayMapper;
+    private final AiEssayService aiEssayService;
+
 
     /**
      * 프로필 입력 폼 화면
@@ -103,13 +111,14 @@ public class ProfileViewController {
             return redirectPath;
         }
 
+        //Session 에 정보랑 DB에 유정 정보 조립
         AppUser currentUser = userOptional.get();
 
         // --- 1) 폼 기본값 설정 ---
         ProfileFormDTO form = new ProfileFormDTO();
 
         // 프로필 제목 기본값: "이름 - 기본 커리어 프로필" 형식
-        String defaultTitle = currentUser.getDisplayName() + " - 기본 커리어 프로필";
+        String defaultTitle = currentUser.getDisplayName() + " - 취업상담 프로필";
         form.setProfileTitle(defaultTitle);
 
         // UserGroup → ProfileType 기본 매핑 (초기 하드코딩 룰)
@@ -118,14 +127,17 @@ public class ProfileViewController {
         ProfileType defaultProfileType = mapUserGroupToProfileType(userGroup);
         form.setProfileType(defaultProfileType);
 
-        // --- 2) 마스터 데이터 로딩 (스킬/가치관/근무환경) ---
+        // --- 2) 마스터 데이터 로딩 (스킬/가치관/근무환경) : 체크박스 선택  ---
         List<MasSkill> skillList = masSkillRepository.findAll();
         List<MasValue> valueList = masValueRepository.findAll();
         List<MasWorkEnv> workEnvList = masWorkEnvRepository.findAll();
         List<MasConcern> concernList = masConcernRepository.findAll(); //추가
 
 
-        // --- 3) 모델에 데이터 바인딩 ---
+        /**
+         *--- 3) 모델에 데이터 바인딩 --- : DB 데이터는 view 리스트로 뿌리고
+         * view 에서는 리스트로 받아서 th:value로 /save 경로 컨트롤러로 보냄
+         */
         model.addAttribute("profileForm", form);
         model.addAttribute("skillList", skillList);
         model.addAttribute("valueList", valueList);
@@ -220,9 +232,10 @@ public class ProfileViewController {
         // 1-6. 선호 근무환경 코드 리스트
         request.setWorkEnvCodes(form.getSelectedWorkEnvCodes());
 
-        // 1-7. 보유 경험 리스트(JSON -> DTO 리스트)
+        // 1-7. 보유 경험 리스트(JSON -> DTO 리스트) :
         List<ProfileExperienceRequestDTO> experienceRequests = new ArrayList<>();
 
+        // 1-7.1 : 이거 신기함 Json 형태로 변화 하기
         String experienceJson = form.getExperienceJson();
         boolean hasExperienceJson = StringUtils.hasText(experienceJson);
 
@@ -263,8 +276,8 @@ public class ProfileViewController {
                             .organization(payload.getOrganization())
                             .startDate(startDate)
                             .endDate(endDate)
-                            .description(payload.getDescription())
-                            .outcome(payload.getOutcome())
+                            .description(payload.getDescription())  //성과 에 대한 과정
+                            .outcome(payload.getOutcome()) //성과 결과
                             .linkUrl(payload.getLinkUrl())
                             .build();
 
@@ -409,13 +422,61 @@ public class ProfileViewController {
         ProfileDetailViewDTO detail =
                 profileService.getProfileDetail(profileId, currentUserId);
 
+        // 프로필 상세 정보 모델에 추가
         model.addAttribute("profileDetail", detail);
 
-        // 추후 탭(자기소개서/AI 분석 등)에 활용할 profileId도 함께 전달
-        model.addAttribute("profileId", profileId);
+        // (지금 단계) AI 자기소개서 결과는 아직 없으므로 null 명시
+        // → 뷰에서 "아직 생성된 자기소개서가 없습니다" 안내 문구 표시
+        Object essayResult = null;
+        model.addAttribute("essayResult", essayResult);
 
-        return "profile/profile-detail"; // templates/profile/profile-detail.html
+        String viewName = "profile/profile-detail";
+
+        // 추후 탭(자기소개서/AI 분석 등)에 활용할 profileId : 다른 페이지 연동시 참고 함께 전달
+//        model.addAttribute("profileId", profileId);
+
+        return viewName; // templates/profile/profile-detail.html
     }
+
+    /**
+     * 프로필 정보를 기반으로 자기소개서(AI) 초안을 생성하고,
+     * 동일한 상세 화면(profile-detail.html)에 결과를 함께 렌더링합니다.
+     */
+    @GetMapping("/{profileId}/essay")
+    public String generateEssayForProfile(
+            @PathVariable Long profileId,
+            HttpSession session,
+            Model model
+    ) {
+
+        // 1) 세션에서 현재 사용자 확인
+        Long currentUserId = userSessionManager.getCurrentUserId(session);
+        if (currentUserId == null) {
+            String redirectPath = "redirect:/user/select";
+            return redirectPath;
+        }
+
+        // 2) 프로필 상세 조회 (조회 실패 시 예외는 ProfileService에서 처리/전파)
+        ProfileDetailViewDTO detailViewDTO =
+                profileService.getProfileDetail(profileId, currentUserId);
+
+        // 3) 프로필 상세 → AI 요청 DTO 변환
+        AiEssayRequestDTO requestDTO = aiEssayMapper.fromProfileDetail(detailViewDTO);
+
+        // 4) AI 서비스(Stub) 호출하여 자기소개서 초안 생성
+        AiEssayResultDTO essayResultDTO = aiEssayService.generateEssay(requestDTO);
+
+        // 5) 뷰에 전달 (상세 + AI 결과)
+        model.addAttribute("profileDetail", detailViewDTO);
+        model.addAttribute("essayResult", essayResultDTO);
+
+        String viewName = "profile/profile-detail";
+        return viewName;
+    }
+
+
+
+
 
 
 }

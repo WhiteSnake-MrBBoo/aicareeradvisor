@@ -30,61 +30,56 @@
     <!-- 상단 헤더 -->
     <div class="mb-4">
         <a th:href="@{/profile/list}" class="btn btn-outline-secondary btn-sm">
-            ← 프로필 목록으로
+            ← 진로 상담 프로필 목록이동
         </a>
     </div>
 
-    <div class="card shadow-sm profile-header-card mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <h3 class="card-title mb-1"
-                        th:text="${profileDetail.profileTitle}">기본 커리어 프로필</h3>
-                    <div class="mb-2 text-muted">
-                        <span th:text="${profileDetail.displayName}">김부환</span>
-                        <span> · </span>
-                        <span th:text="${profileDetail.email}">email@example.com</span>
+    <div class="card shadow-sm border-0 profile-header-card mb-4" style="border-left: 5px solid #1B56FD !important;">
+        <div class="card-body p-4">
+            <div class="row align-items-center g-3">
+
+                <div class="col-12 col-md-7">
+                    <div class="d-flex align-items-center mb-2">
+                        <h3 class="card-title mb-0 fw-bold me-2" th:text="${profileDetail.profileTitle}">진로상담 기본 커리어 프로필</h3>
+                        <span class="badge rounded-pill text-bg-primary" th:text="${profileDetail.profileTypeLabel}">ADULT_JOBSEEKER</span>
                     </div>
 
-                    <div class="mb-2">
-                        <span class="badge text-bg-primary badge-profile-type"
-                              th:text="${profileDetail.profileTypeLabel}">ADULT_JOBSEEKER</span>
-                        <span class="badge text-bg-secondary badge-profile-type"
+                    <div class="mb-3">
+                        <span class="text-dark fw-semibold"
+                              th:text="${profileDetail.displayName}">김부환</span>
+                        <span class="text-muted mx-2">|</span>
+                        <span class="text-muted"
+                              th:text="${profileDetail.email}">email@example.com</span>
+                        <span class="badge bg-light text-dark border ms-2"
                               th:text="${profileDetail.userGroup}">ADULT</span>
                     </div>
 
-                    <p class="mb-0 text-muted" th:text="${profileDetail.mainSummary}">
-                        프로필 요약 문장이 여기에 표시됩니다.
+                    <p class="mb-0 text-secondary italic" style="border-left: 3px solid #dee2e6; padding-left: 10px;">
+                        <i class="bi bi-quote"></i>
+                        <span th:text="${profileDetail.mainSummary}">7. 프로필 요약 문장이 여기에 표시됩니다.</span>
                     </p>
                 </div>
 
-                <div class="text-end text-muted">
-                    <div>
-                        생성일:
-                        <span th:text="${#temporals.format(profileDetail.regDate, 'yyyy-MM-dd HH:mm')}">
-                            2025-12-19 11:52
-                        </span>
+                <div class="col-12 col-md-5 text-md-end">
+                    <div class="mb-3 small text-muted">
+                        <div><i class="bi bi-calendar-plus"></i> 생성: <span th:text="${#temporals.format(profileDetail.regDate, 'yyyy-MM-dd HH:mm')}">2025-12-19 11:52</span></div>
+                        <div><i class="bi bi-pencil-square"></i> 수정: <span th:text="${#temporals.format(profileDetail.modDate, 'yyyy-MM-dd HH:mm')}">2025-12-19 11:52</span></div>
                     </div>
-                    <div>
-                        수정일:
-                        <span th:text="${#temporals.format(profileDetail.modDate, 'yyyy-MM-dd HH:mm')}">
-                            2025-12-19 11:52
-                        </span>
+
+                    <!--AI 추론 아코디언 설계 부분-->
+                    <div class="d-flex flex-wrap justify-content-md-end gap-2">
+                        <a class="btn btn-primary btn-sm shadow-sm"
+                           th:href="@{|/profile/${profileDetail.profileId}/essay|}"
+                           style="background-color: #1B56FD; border: none;">
+                            <i class="bi bi-magic"></i> 자기 소개서 작성 (AI)
+                        </a>
+
+                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                            <i class="bi bi-cpu"></i> AI 커리어 분석 <small>(졸고 있음..)</small>
+                        </button>
                     </div>
                 </div>
-            </div>
 
-            <hr>
-
-            <!-- 향후 탭/버튼: 자기소개서 / AI 분석 -->
-            <div class="d-flex gap-2">
-                <a th:href="@{|/profile/${profileId}/essay|}"
-                   class="btn btn-primary btn-sm">
-                    자기소개서 작성 (AI)
-                </a>
-                <button class="btn btn-outline-secondary btn-sm" disabled>
-                    AI 커리어 분석 (준비 중)
-                </button>
             </div>
         </div>
     </div>
@@ -129,7 +124,7 @@
                         <li class="list-group-item"
                             th:each="val : ${profileDetail.values}">
                             <span class="badge bg-primary me-2"
-                                  th:text="${val.priorityOrder}">1</span>
+                                  th:text="${val.priorityOrder}">순위(1~3)</span>
                             <span th:text="${val.valueName}">성장 가능성</span>
                         </li>
                     </ul>
@@ -172,7 +167,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <span class="badge text-bg-info me-2"
-                                      th:text="${exp.experienceTypeLabel}">경력</span>
+                                      th:text="${exp.experienceTypeLabel}">경력 및 역량</span>
                                 <strong th:text="${exp.title}">AWS 기반 웹 개발 과정</strong>
                             </div>
                             <small class="text-muted"
@@ -188,13 +183,13 @@
                         <p class="mb-1 small text-success"
                            th:if="${exp.outcome != null}"
                            th:text="'성과: ' + ${exp.outcome}">
-                            성과: 프로젝트 완수 및 우수 수료
+                            성과 및 결과 : 프로젝트 완수 및 우수 수료
                         </p>
                         <a th:if="${exp.linkUrl != null}"
                            th:href="${exp.linkUrl}"
                            class="small"
                            target="_blank">
-                            관련 링크 열기
+                            URL 주소 : 관련 링크 열기
                         </a>
                         <hr/>
                     </div>
@@ -204,7 +199,7 @@
             <!-- 진로 고민 -->
             <div class="card shadow-sm section-card">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">현재 진로 고민</h5>
+                    <h5 class="card-title mb-3">취업 진로 선택시 고민</h5>
 
                     <div th:if="${#lists.isEmpty(profileDetail.concerns)}">
                         <p class="text-muted mb-0">등록된 고민 정보가 없습니다.</p>
@@ -227,6 +222,119 @@
 
         </div>
     </div>
+
+    <!-- ============ [아코디언]  AI 기반 결과 / 도구 섹션 ================= -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">AI 기반 결과 & 도구</h5>
+            <p class="text-muted mb-3">
+                현재 프로필 정보를 기반으로 한 자기소개서, 커리어 분석, Work24 연계 결과를
+                이 영역에서 단계적으로 확장해 나갈 예정입니다.
+            </p>
+
+            <div class="accordion" id="aiToolsAccordion">
+
+                <!-- 1) 자기소개서 초안 (AI) -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingEssay">
+                        <button class="accordion-button collapsed"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#aiEssaySection"
+                                aria-expanded="false"
+                                aria-controls="aiEssaySection">
+                            자기소개서 초안 (AI)
+                        </button>
+                    </h2>
+                    <div id="aiEssaySection"
+                         class="accordion-collapse collapse [[${essayResult != null} ? 'show' : '']]"
+                         aria-labelledby="headingEssay"
+                         data-bs-parent="#aiToolsAccordion">
+                        <div class="accordion-body">
+
+                            <!-- (다음 단계) AI 결과가 있을 때 -->
+                            <div th:if="${essayResult != null}">
+                                <h6 class="fw-semibold mb-2">AI 생성 자기소개서 초안</h6>
+                                <!-- 추후: AiEssayResultDTO.rawEssayText 등 사용 -->
+                                <pre class="mb-0"
+                                     th:text="${essayResult.rawEssayText}">
+                                    자기소개서 내용이 이 영역에 출력됩니다.
+                                </pre>
+                            </div>
+
+                            <!-- (현재 단계) 아직 생성된 자소서가 없을 때 -->
+                            <div th:if="${essayResult == null}">
+                                <p class="text-muted mb-2">
+                                    아직 생성된 자기소개서가 없습니다.
+                                </p>
+                                <p class="small text-muted mb-0">
+                                    상단의 <strong>“자기소개서 작성 (AI)”</strong> 버튼을 통해
+                                    프로필 정보를 기반으로 한 자기소개서 초안을 생성하는 기능을
+                                    다음 단계에서 연결할 예정입니다.
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2) AI 커리어 분석 V1 (준비 중) -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingCareer">
+                        <button class="accordion-button collapsed"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#aiCareerSection"
+                                aria-expanded="false"
+                                aria-controls="aiCareerSection">
+                            AI 커리어 분석 V1 (준비 중)
+                        </button>
+                    </h2>
+                    <div id="aiCareerSection"
+                         class="accordion-collapse collapse"
+                         aria-labelledby="headingCareer"
+                         data-bs-parent="#aiToolsAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-0">
+                                프로필의 <strong>스킬, 직업 가치관, 보유 경험</strong>을 기반으로
+                                추천 직업군과 액션 플랜을 제안하는 리포트 영역입니다.<br>
+                                Work24 API 연동과 함께 구현을 진행할 예정입니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3) Work24 심리검사 / 채용정보 피드백 (준비 중) -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingWork24">
+                        <button class="accordion-button collapsed"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#work24Section"
+                                aria-expanded="false"
+                                aria-controls="work24Section">
+                            Work24 심리검사 / 채용정보 피드백 (준비 중)
+                        </button>
+                    </h2>
+                    <div id="work24Section"
+                         class="accordion-collapse collapse"
+                         aria-labelledby="headingWork24"
+                         data-bs-parent="#aiToolsAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-0">
+                                Work24의 <strong>심리검사 결과, 직업 정보, 채용 정보 API</strong>를 활용하여<br>
+                                현재 프로필과의 적합도 및 추가 피드백을 제공할 영역입니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div> <!-- /accordion -->
+        </div>
+    </div>
+    <!-- ============ [아코디언]  AI 기반 결과 / 도구 섹션 ================= -->
+
+
 
 </div>
 
