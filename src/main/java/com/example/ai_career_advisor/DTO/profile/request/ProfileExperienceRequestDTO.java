@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import lombok.*;
 
 /**
- * 프로필 경험 및 포트 폴리오 등록 요청 DTO
+ * 프로필 경험 및 역량 /  포트 폴리오 등록 요청 DTO
  */
 @Getter
 @Setter
