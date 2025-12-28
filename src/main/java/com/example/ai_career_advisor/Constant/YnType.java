@@ -6,5 +6,6 @@ package com.example.ai_career_advisor.Constant;
  * - DB에는 "Y" 또는 "N" 문자열로 저장됩니다.
  */
 public enum YnType {
+
     Y, N
 }
