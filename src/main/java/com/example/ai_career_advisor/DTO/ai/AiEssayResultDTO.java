@@ -20,6 +20,14 @@ public class AiEssayResultDTO {
      */
     private String rawEssayText;
 
+
+    /** 자소서 제목(선택) */
+    private String title;
+
+    /** 사용한 모델명(선택) */
+    private String modelName;
+
+
     // 필요 시 단락별 필드를 추가해서 확장 가능
     // private String introParagraph;
     // private String strengthParagraph;

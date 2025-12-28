@@ -232,53 +232,129 @@
                 이 영역에서 단계적으로 확장해 나갈 예정입니다.
             </p>
 
-            <div class="accordion" id="aiToolsAccordion">
+            <div class="accordion mt-4" id="aiToolsAccordion">
 
-                <!-- 1) 자기소개서 초안 (AI) -->
+                <!-- [섹션 1] 자기소개서(AI) -->
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingEssay">
-                        <button class="accordion-button collapsed"
+                        <button class="accordion-button"
                                 type="button"
                                 data-bs-toggle="collapse"
                                 data-bs-target="#aiEssaySection"
-                                aria-expanded="false"
+                                aria-expanded="true"
                                 aria-controls="aiEssaySection">
+                            <i class="bi bi-magic me-2"></i>
                             자기소개서 초안 (AI)
+                            <span class="ms-2 badge bg-light text-dark"
+                                  th:if="${essayResult != null}">
+                    대표 버전
+                </span>
                         </button>
                     </h2>
+
                     <div id="aiEssaySection"
-                         class="accordion-collapse collapse [[${essayResult != null} ? 'show' : '']]"
+                         class="accordion-collapse collapse"
+                         th:classappend="${essayResult} != null ? ' show' : ''"
                          aria-labelledby="headingEssay"
                          data-bs-parent="#aiToolsAccordion">
                         <div class="accordion-body">
 
-                            <!-- (다음 단계) AI 결과가 있을 때 -->
+                            <!-- 1) 대표 자소서가 있을 때 -->
                             <div th:if="${essayResult != null}">
-                                <h6 class="fw-semibold mb-2">AI 생성 자기소개서 초안</h6>
-                                <!-- 추후: AiEssayResultDTO.rawEssayText 등 사용 -->
-                                <pre class="mb-0"
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <strong th:text="${essayResult.title != null ? essayResult.title : '대표 자기소개서'}">
+                                            대표 자기소개서
+                                        </strong>
+                                    </div>
+                                    <div class="text-muted small">
+                            <span th:if="${essayResult.modelName != null}">
+                                모델: <span th:text="${essayResult.modelName}">STUB</span>
+                            </span>
+                                    </div>
+                                </div>
+
+                                <pre class="border rounded p-3 bg-light"
+                                     style="white-space: pre-wrap; font-size: 0.9rem;"
                                      th:text="${essayResult.rawEssayText}">
-                                    자기소개서 내용이 이 영역에 출력됩니다.
-                                </pre>
+                        아직 생성된 자기소개서가 없습니다.
+                    </pre>
                             </div>
 
-                            <!-- (현재 단계) 아직 생성된 자소서가 없을 때 -->
+                            <!-- 2) 대표 자소서가 아직 없을 때 -->
                             <div th:if="${essayResult == null}">
-                                <p class="text-muted mb-2">
-                                    아직 생성된 자기소개서가 없습니다.
-                                </p>
-                                <p class="small text-muted mb-0">
-                                    상단의 <strong>“자기소개서 작성 (AI)”</strong> 버튼을 통해
-                                    프로필 정보를 기반으로 한 자기소개서 초안을 생성하는 기능을
-                                    다음 단계에서 연결할 예정입니다.
-                                </p>
+                                <div class="alert alert-info mb-0">
+                                    아직 대표 자기소개서가 없습니다.<br>
+                                    상단의 <strong>자기소개서 생성 (AI)</strong> 버튼을 눌러
+                                    첫 번째 초안을 만들어 보세요.
+                                </div>
                             </div>
 
                         </div>
                     </div>
                 </div>
 
-                <!-- 2) AI 커리어 분석 V1 (준비 중) -->
+                <!--시작점 / [섹션 1]  - AI 자소서 생성 : 히스토리 영역-->
+                <hr class="my-4"/>
+
+                <h6 class="mb-2">
+                    <i class="bi bi-clock-history me-1"></i>
+                    자기소개서 히스토리
+                </h6>
+
+                <div th:if="${#lists.isEmpty(essayHistoryList)}">
+                    <p class="text-muted small mb-0">
+                        아직 저장된 자기소개서 버전이 없습니다.
+                    </p>
+                </div>
+
+                <div th:if="${!#lists.isEmpty(essayHistoryList)}" class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">버전</th>
+                            <th>제목</th>
+                            <th style="width: 150px;">생성일</th>
+                            <th style="width: 120px;">모델</th>
+                            <th style="width: 90px;">대표</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="essay : ${essayHistoryList}">
+                            <td th:text="${essay.versionNo}">1</td>
+                            <td>
+                                <span th:text="${essay.title != null ? essay.title : '제목 없음'}">제목 없음</span>
+                                <div class="text-muted small"
+                                     th:text="${essay.previewText}">
+                                    내용 일부 프리뷰
+                                </div>
+                            </td>
+                            <td>
+                <span th:text="${#temporals.format(essay.regDate, 'yyyy-MM-dd HH:mm')}">
+                    2025-12-24 18:05
+                </span>
+                            </td>
+                            <td th:text="${essay.modelName != null ? essay.modelName : '-'}">
+                                STUB
+                            </td>
+                            <td>
+                <span th:if="${essay.main}"
+                      class="badge bg-primary">
+                    대표
+                </span>
+                                <span th:if="${!essay.main}"
+                                      class="badge bg-secondary">
+                    보조
+                </span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!--끝지점 / [섹션 1] - AI 자소서 생성 : 히스토리 영역-->
+
+
+                <!-- 섹션 2) AI 커리어 분석 V1 (준비 중) -->
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingCareer">
                         <button class="accordion-button collapsed"
@@ -304,7 +380,7 @@
                     </div>
                 </div>
 
-                <!-- 3) Work24 심리검사 / 채용정보 피드백 (준비 중) -->
+                <!-- 섹션 3) Work24 심리검사 / 채용정보 피드백 (준비 중) -->
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingWork24">
                         <button class="accordion-button collapsed"

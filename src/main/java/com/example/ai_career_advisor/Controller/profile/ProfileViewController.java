@@ -6,6 +6,7 @@ import com.example.ai_career_advisor.Constant.UserGroup;
 
 import com.example.ai_career_advisor.DTO.ai.AiEssayRequestDTO;
 import com.example.ai_career_advisor.DTO.ai.AiEssayResultDTO;
+import com.example.ai_career_advisor.DTO.profile.ai.ProfileEssaySummaryDTO;
 import com.example.ai_career_advisor.DTO.profile.request.ProfileConcernRequestDTO;
 import com.example.ai_career_advisor.DTO.profile.request.ProfileCreateRequestDTO;
 import com.example.ai_career_advisor.DTO.profile.request.ProfileExperienceRequestDTO;
@@ -25,6 +26,7 @@ import com.example.ai_career_advisor.Repository.master.MasValueRepository;
 import com.example.ai_career_advisor.Repository.master.MasWorkEnvRepository;
 
 import com.example.ai_career_advisor.Service.ai.AiEssayService;
+import com.example.ai_career_advisor.Service.profile.ProfileEssayService;
 import com.example.ai_career_advisor.Service.profile.ProfileService;
 import com.example.ai_career_advisor.Service.user.UserService;
 import com.example.ai_career_advisor.Util.UserSessionManager;
@@ -83,9 +85,12 @@ public class ProfileViewController {
     // JSON 파싱용 ObjectMapper (스프링에서 자동 주입)
     private final ObjectMapper objectMapper;
 
-    // 새로 추가 : AI 영역 클래스 가져 오기 : 25_1223
+    // 새로 추가 : AI 영역 클래스 가져 오기 : 25_1223 : 테스트용 Serdvice 로직이라 추후에 삭제 예정
     private final AiEssayMapper aiEssayMapper;
     private final AiEssayService aiEssayService;
+
+    //25_1226 : 자기 소계서를 불러올 서비스 로직
+    private final ProfileEssayService profileEssayService; // 새로 추가
 
 
     /**
@@ -408,27 +413,40 @@ public class ProfileViewController {
      * 프로필 상세 화면
      * - /profile/{profileId}
      * - 현재 세션의 사용자와 프로필 소유자를 검증한 뒤 상세 정보를 보여줍니다.
+     * - 자기소개서 히스토리 목록
      */
     @GetMapping("/{profileId}")
     public String viewProfileDetail(@PathVariable Long profileId,
                                     HttpSession session,
                                     Model model) {
 
+        //로그인 User session용 확인 메서드 : 유효성 검사
         Long currentUserId = userSessionManager.getCurrentUserId(session);
         if (currentUserId == null) {
             return "redirect:/user/select";
         }
 
-        ProfileDetailViewDTO detail =
+        //프로필 정보 가져 오기
+        ProfileDetailViewDTO detailViewDTO  =
                 profileService.getProfileDetail(profileId, currentUserId);
 
+        // 자기 소계서 히스토리 목록 조회
+        List<ProfileEssaySummaryDTO> essayHistory =
+                profileEssayService.getEssaySummaries(profileId, currentUserId);
+
+        // 3) 대표 자소서 조회 (없으면 null)
+        AiEssayResultDTO mainEssayResult =
+                profileEssayService.getMainEssayResult(profileId, currentUserId);
+
         // 프로필 상세 정보 모델에 추가
-        model.addAttribute("profileDetail", detail);
+        model.addAttribute("profileDetail", detailViewDTO);
 
         // (지금 단계) AI 자기소개서 결과는 아직 없으므로 null 명시
-        // → 뷰에서 "아직 생성된 자기소개서가 없습니다" 안내 문구 표시
-        Object essayResult = null;
-        model.addAttribute("essayResult", essayResult);
+        model.addAttribute("essayResult", mainEssayResult);
+        model.addAttribute("essayHistoryList", essayHistory);
+
+        // 프로필 ID도 템플릿에서 편하게 쓰도록 전달
+        model.addAttribute("profileId", profileId);
 
         String viewName = "profile/profile-detail";
 
@@ -439,8 +457,12 @@ public class ProfileViewController {
     }
 
     /**
-     * 프로필 정보를 기반으로 자기소개서(AI) 초안을 생성하고,
-     * 동일한 상세 화면(profile-detail.html)에 결과를 함께 렌더링합니다.
+     * 프로필 기반 자기소개서(AI) 생성 + DB 저장 + 대표 버전 갱신
+     *
+     * - 새 버전을 생성하고, prf_profile_essay 에 저장
+     * - 기존 대표는 N, 새 버전은 Y 로 설정
+     * - 다시 상세 화면(profile-detail)로 돌아가서
+     *   대표 자소서 + 히스토리까지 함께 노출
      */
     @GetMapping("/{profileId}/essay")
     public String generateEssayForProfile(
@@ -456,19 +478,28 @@ public class ProfileViewController {
             return redirectPath;
         }
 
-        // 2) 프로필 상세 조회 (조회 실패 시 예외는 ProfileService에서 처리/전파)
+        // 2) 자소서 생성 + DB 저장
+        AiEssayResultDTO essayResult =
+                profileEssayService.generateAndSaveEssay(profileId, currentUserId);
+
+        // 3) 프로필 상세 조회 (조회 실패 시 예외는 ProfileService에서 처리/전파)
         ProfileDetailViewDTO detailViewDTO =
                 profileService.getProfileDetail(profileId, currentUserId);
 
-        // 3) 프로필 상세 → AI 요청 DTO 변환
-        AiEssayRequestDTO requestDTO = aiEssayMapper.fromProfileDetail(detailViewDTO);
+        // 4) 자소서 히스토리 목록 재조회 : 결과물 DB 에 던지고 리스트로 조회
+            List<ProfileEssaySummaryDTO> essayHistory =
+                    profileEssayService.getEssaySummaries(profileId, currentUserId);
 
-        // 4) AI 서비스(Stub) 호출하여 자기소개서 초안 생성
-        AiEssayResultDTO essayResultDTO = aiEssayService.generateEssay(requestDTO);
+        // 5) AI 서비스(Stub) 호출하여 자기소개서 초안 생성
+//        AiEssayResultDTO essayResultDTO = aiEssayService.generateEssay(requestDTO);
 
-        // 5) 뷰에 전달 (상세 + AI 결과)
+        // 6) 뷰에 전달 (상세 + AI 결과)
         model.addAttribute("profileDetail", detailViewDTO);
-        model.addAttribute("essayResult", essayResultDTO);
+        model.addAttribute("essayHistoryList", essayHistory);
+
+        //결과를 essayResult에 그대로 사용
+        model.addAttribute("essayResult", essayResult);
+        model.addAttribute("profileId", profileId);
 
         String viewName = "profile/profile-detail";
         return viewName;
